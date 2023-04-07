@@ -9,14 +9,19 @@ const Login = () => {
 	const [loading, setLoading] = useState(false);
 
 	// Form submit
-	const submitHandler = (values) => {
+	const submitHandler = async (values) => {
 		try {
 			setLoading(true);
-			const {data} = axios.post("/users/login", values);
-			setLoading(false);
-			message.success("Login Successfull");
-      localStorage.setItem('user', JSON.stringify({...data, password: ''}));
-			navigate("/");
+			let { data } = await axios.post("/users/login", values);
+			console.log(data);
+			if (data) {
+				setLoading(false);
+				message.success("Login Successfull");
+				localStorage.setItem("user", JSON.stringify({ ...data, password: "" }));
+				navigate("/");
+			} else {
+				throw "Record not found";
+			}
 		} catch (error) {
 			setLoading(false);
 			message.error("Invalid credentials");
