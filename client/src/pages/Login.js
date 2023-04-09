@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Form, Input, message } from "antd";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -20,13 +20,20 @@ const Login = () => {
 				localStorage.setItem("user", JSON.stringify({ ...data, password: "" }));
 				navigate("/");
 			} else {
-				throw "Record not found";
+				throw data;
 			}
 		} catch (error) {
 			setLoading(false);
 			message.error("Invalid credentials");
 		}
 	};
+
+	// prevent for login user
+	useEffect(() => {
+		if (localStorage.getItem("user")) {
+			navigate("/");
+		}
+	}, [navigate]);
 
 	return (
 		<>
