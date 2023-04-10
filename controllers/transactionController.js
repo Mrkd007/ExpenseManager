@@ -1,9 +1,24 @@
 const transactionModel = require("../models/transactionModel");
+const moment = require("moment");
 
 const getAllTransaction = async (req, res) => {
 	try {
+		const { frequency, userid, selectedDate, type } = req.body;
 		const transaction = await transactionModel.find({
-			userid: req.body.userid,
+			...(frequency !== "custom"
+				? {
+						date: {
+							$gt: moment().subtract(Number(frequency), "d").toDate(),
+						},
+				  }
+				: {
+						date: {
+							$gte: selectedDate[0],
+							$lte: selectedDate[1],
+						},
+				  }),
+			...(type !== "all" && { type }),
+			userid,
 		});
 		res.status(200).json(transaction);
 	} catch (error) {

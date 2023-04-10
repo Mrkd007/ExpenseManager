@@ -1,12 +1,70 @@
-import React, { useState } from "react";
-import { Form, Input, Modal, Select, message } from "antd";
+import React, { useEffect, useState } from "react";
+import { Form, Input, Modal, Select, Table, message, DatePicker } from "antd";
+import { UnorderedListOutlined, AreaChartOutlined } from "@ant-design/icons";
 import Layout from "../components/Layout/Layout";
 import axios from "axios";
 import Spinner from "../components/Spinner";
+import moment from "moment";
+import Analytics from "../components/Analytics";
+const { RangePicker } = DatePicker;
 
 const HomePage = () => {
 	const [showModal, setShowModal] = useState(false);
 	const [loading, setLoading] = useState(false);
+	const [allTransation, setAllTransaction] = useState([]);
+	const [frequency, setFrequency] = useState("7");
+	const [selectedDate, setSelectedDate] = useState([]);
+	const [type, setType] = useState("all");
+	const [viewData, setViewData] = useState("table");
+
+	const columns = [
+		{
+			title: "Date",
+			dataIndex: "date",
+			render: (text) => <span>{moment(text).format("YYYY-MM-DD")}</span>,
+		},
+		{
+			title: "Amount",
+			dataIndex: "amount",
+		},
+		{
+			title: "Type",
+			dataIndex: "type",
+		},
+		{
+			title: "Category",
+			dataIndex: "category",
+		},
+		{
+			title: "Refrence",
+			dataIndex: "refrence",
+		},
+		{
+			title: "Actions",
+		},
+	];
+
+	useEffect(() => {
+		const getAllTransaction = async () => {
+			try {
+				const user = JSON.parse(localStorage.getItem("user"));
+				setLoading(true);
+				const res = await axios.post("/transactions/get-transaction", {
+					userid: user._id,
+					frequency,
+					selectedDate,
+					type,
+				});
+				setLoading(false);
+				console.log(res.data);
+				setAllTransaction(res.data);
+			} catch (error) {
+				setLoading(false);
+				message.error("Failed to get all transaction");
+			}
+		};
+		getAllTransaction();
+	}, [frequency, selectedDate, type]);
 
 	const handleSubmit = async (values) => {
 		try {
@@ -29,7 +87,69 @@ const HomePage = () => {
 		<Layout>
 			{loading && <Spinner />}
 			<div className='filters'>
-				<div>Range Filters: </div>
+				<div>
+					<h6>Select Frequency:</h6>
+					<Select
+						value={frequency}
+						onChange={(values) => {
+							setFrequency(values);
+						}}
+					>
+						<Select.Option value='7'>Last 1 Week</Select.Option>
+						<Select.Option value='30'>Last 1 Month</Select.Option>
+						<Select.Option value='365'>Last 1 Year</Select.Option>
+						<Select.Option value='custom'>Custom</Select.Option>
+					</Select>
+					{frequency === "custom" && (
+						<RangePicker
+							value={selectedDate}
+							on
+							onChange={(values) => {
+								setSelectedDate(values);
+							}}
+						/>
+					)}
+				</div>
+				<div>
+					<h6>Select Type:</h6>
+					<Select
+						value={type}
+						onChange={(values) => {
+							setType(values);
+						}}
+					>
+						<Select.Option value='all'>ALL</Select.Option>
+						<Select.Option value='income'>INCOME</Select.Option>
+						<Select.Option value='expense'>EXPENSE</Select.Option>
+					</Select>
+					{frequency === "custom" && (
+						<RangePicker
+							value={selectedDate}
+							on
+							onChange={(values) => {
+								setSelectedDate(values);
+							}}
+						/>
+					)}
+				</div>
+				<div className='switch-icons'>
+					<UnorderedListOutlined
+						className={`mx-2 ${
+							viewData === "table" ? "active-icon" : "inactive-icon"
+						}`}
+						onClick={() => {
+							setViewData("table");
+						}}
+					/>
+					<AreaChartOutlined
+						className={`mx-2 ${
+							viewData === "analytics" ? "active-icon" : "inactive-icon"
+						}`}
+						onClick={() => {
+							setViewData("analytics");
+						}}
+					/>
+				</div>
 				<div>
 					<button
 						className='btn btn-primary'
@@ -41,7 +161,13 @@ const HomePage = () => {
 					</button>
 				</div>
 			</div>
-			<div className='content'></div>
+			<div className='content'>
+				{viewData === "table" ? (
+					<Table columns={columns} dataSource={allTransation} />
+				) : (
+					<Analytics allTransation={allTransation} />
+				)}
+			</div>
 			<Modal
 				title='Add Transaction'
 				open={showModal}
@@ -50,6 +176,7 @@ const HomePage = () => {
 				}}
 				footer={false}
 			>
+				{loading && <Spinner />}
 				<Form layout='vertical' onFinish={handleSubmit}>
 					<Form.Item label='Amount*:' name='amount'>
 						<Input type='text' required />

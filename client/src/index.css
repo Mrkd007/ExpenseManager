@@ -24,3 +24,22 @@
   padding: 15px 20px;
   box-shadow: 0 0 3px gray;
 }
+
+.switch-icons {
+  border: 1px solid rgb(0, 0, 0, 0.677);
+  border-radius: 5px;
+  padding: 10px 15px;
+}
+
+.anticon svg {
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.anticon.active-icon {
+  color: black;
+}
+
+.anticon.inactive-icon {
+  color: gray;
+}
